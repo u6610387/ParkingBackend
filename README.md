@@ -165,8 +165,8 @@ pm2 save
 
 ## 👨 Team Member
 
--Thanakrit Kodklangdon
--Kitirat Pisithaporn
+- Thanakrit Kodklangdon
+- Kitirat Pisithaporn
 
 Student Project – CSX4107  
 Parking Slot Reservation System
