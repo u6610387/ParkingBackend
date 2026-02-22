@@ -6,11 +6,12 @@ const ReservationSchema = new mongoose.Schema(
     slotId: { type: mongoose.Schema.Types.ObjectId, ref: "ParkingSlot", required: true },
     startTime: { type: Date, required: true },
     endTime: { type: Date, required: true },
-    status: { type: String, enum: ["active", "cancelled"], default: "active" },
+    status: { type: String, enum: ["active", "cancelled", "expired"], default: "active" },
   },
   { timestamps: true }
 );
 
 ReservationSchema.index({ slotId: 1, startTime: 1, endTime: 1, status: 1 });
+ReservationSchema.index({ userId: 1, status: 1, startTime: -1 });
 
 export default mongoose.models.Reservation || mongoose.model("Reservation", ReservationSchema);

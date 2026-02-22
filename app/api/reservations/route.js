@@ -9,8 +9,14 @@ export async function GET(req) {
   const u = requireUser();
   await dbConnect();
 
+  const now = new Date();
+  await Reservation.updateMany(
+    { status: "active", endTime: { $lt: now } },
+    { $set: { status: "expired" } }
+  );
+
   const { searchParams } = new URL(req.url);
-  const mine = searchParams.get("mine"); // "1"
+  const mine = searchParams.get("mine");
   const status = searchParams.get("status");
 
   const q = {};
@@ -31,9 +37,10 @@ export async function POST(req) {
   const { s, e } = assertTimeRange(startTime, endTime);
 
   const slot = await ParkingSlot.findById(slotId);
-  if (!slot || slot.status !== "active") return NextResponse.json({ message: "Slot not available" }, { status: 400 });
+  if (!slot || slot.status !== "active") {
+    return NextResponse.json({ message: "Slot not available" }, { status: 400 });
+  }
 
-  // กันจองซ้อน
   const conflict = await Reservation.findOne({
     slotId,
     status: "active",
@@ -41,7 +48,9 @@ export async function POST(req) {
     endTime: { $gt: s },
   });
 
-  if (conflict) return NextResponse.json({ message: "Time slot already booked" }, { status: 409 });
+  if (conflict) {
+    return NextResponse.json({ message: "Time slot already booked" }, { status: 409 });
+  }
 
   const created = await Reservation.create({
     userId: u.id,
