@@ -30,13 +30,8 @@ export async function GET() {
     startTime: { $gt: now },
   });
 
-  const expiredReservations = await Reservation.countDocuments({
-    status: "expired",
-  });
-
-  const cancelledReservations = await Reservation.countDocuments({
-    status: "cancelled",
-  });
+  const expiredReservations = await Reservation.countDocuments({ status: "expired" });
+  const cancelledReservations = await Reservation.countDocuments({ status: "cancelled" });
 
   const startOfToday = new Date(now);
   startOfToday.setHours(0, 0, 0, 0);
@@ -45,21 +40,24 @@ export async function GET() {
   endOfToday.setHours(23, 59, 59, 999);
 
   const bookingsToday = await Reservation.countDocuments({
-    startTime: { $gte: startOfToday, $lte: endOfToday },
     status: { $in: ["active", "cancelled", "expired"] },
+    startTime: { $lt: endOfToday },
+    endTime: { $gt: startOfToday },
   });
+
+  const start7d = new Date(now);
+  start7d.setDate(start7d.getDate() - 7);
 
   const peakHours = await Reservation.aggregate([
     {
       $match: {
-        startTime: { $gte: startOfToday, $lte: endOfToday },
         status: { $in: ["active", "cancelled", "expired"] },
+        startTime: { $gte: start7d, $lte: now },
       },
     },
     { $project: { hour: { $hour: "$startTime" } } },
     { $group: { _id: "$hour", count: { $sum: 1 } } },
     { $sort: { _id: 1 } },
-    { $limit: 24 },
   ]);
 
   const topZones = await Reservation.aggregate([
